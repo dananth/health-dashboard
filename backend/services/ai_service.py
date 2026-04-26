@@ -1,18 +1,24 @@
 import os
+import sys
 import ssl
-import truststore
 import httpx
 from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Inject macOS system keychain (needed for corporate SSL inspection proxies like Cisco Secure Access)
-truststore.inject_into_ssl()
-
-# Build an httpx client using the native OS trust store
-_ssl_context = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-_http_client = httpx.Client(verify=_ssl_context)
+# On macOS with corporate SSL inspection (e.g. Cisco Secure Access) the system
+# keychain must be used via truststore. On Linux (Railway) default SSL works fine.
+if sys.platform == "darwin":
+    try:
+        import truststore
+        truststore.inject_into_ssl()
+        _ssl_context = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        _http_client = httpx.Client(verify=_ssl_context)
+    except ImportError:
+        _http_client = httpx.Client()
+else:
+    _http_client = httpx.Client()
 
 client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
