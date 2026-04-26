@@ -1,7 +1,15 @@
 import axios from 'axios';
 
 const api = axios.create({ baseURL: '/api' });
+// ── Auth ─────────────────────────────────────────────────────────────────────
+export const login = (email: string, password: string) =>
+  api.post('/auth/login', { email, password }).then((r) => r.data);
 
+export const logout = () =>
+  api.post('/auth/logout').then((r) => r.data);
+
+export const fetchAuthStatus = () =>
+  api.get('/auth/status').then((r) => r.data);
 // ── Garmin ──────────────────────────────────────────────────────────────────
 export const fetchGarminSummary = (days = 7) =>
   api.get('/garmin/summary', { params: { days } }).then((r) => r.data);

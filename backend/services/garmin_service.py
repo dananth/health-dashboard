@@ -1,28 +1,9 @@
-import os
 from datetime import date, timedelta
-from typing import Optional
-from garminconnect import Garmin
-from dotenv import load_dotenv
-
-load_dotenv()
-
-_client: Optional[Garmin] = None
-
-
-def _get_client() -> Garmin:
-    global _client
-    if _client is None:
-        email = os.getenv("GARMIN_EMAIL")
-        password = os.getenv("GARMIN_PASSWORD")
-        if not email or not password:
-            raise RuntimeError("GARMIN_EMAIL and GARMIN_PASSWORD must be set in .env")
-        _client = Garmin(email, password)
-        _client.login()
-    return _client
+from session_store import get_garmin_client
 
 
 def get_heart_rate_data(days: int = 7) -> list[dict]:
-    client = _get_client()
+    client = get_garmin_client()
     result = []
     for i in range(days - 1, -1, -1):
         day = (date.today() - timedelta(days=i)).isoformat()
@@ -37,7 +18,7 @@ def get_heart_rate_data(days: int = 7) -> list[dict]:
 
 
 def get_steps_data(days: int = 7) -> list[dict]:
-    client = _get_client()
+    client = get_garmin_client()
     result = []
     for i in range(days - 1, -1, -1):
         day = (date.today() - timedelta(days=i)).isoformat()
@@ -51,7 +32,7 @@ def get_steps_data(days: int = 7) -> list[dict]:
 
 
 def get_sleep_data(days: int = 7) -> list[dict]:
-    client = _get_client()
+    client = get_garmin_client()
     result = []
     for i in range(days - 1, -1, -1):
         day = (date.today() - timedelta(days=i)).isoformat()
@@ -76,7 +57,7 @@ def get_sleep_data(days: int = 7) -> list[dict]:
 
 
 def get_user_stats() -> dict:
-    client = _get_client()
+    client = get_garmin_client()
     try:
         today = date.today().isoformat()
         stats = client.get_stats(today)

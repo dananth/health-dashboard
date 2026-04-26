@@ -1,10 +1,23 @@
 import os
+import ssl
+import truststore
+import httpx
 from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Inject macOS system keychain (needed for corporate SSL inspection proxies like Cisco Secure Access)
+truststore.inject_into_ssl()
+
+# Build an httpx client using the native OS trust store
+_ssl_context = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+_http_client = httpx.Client(verify=_ssl_context)
+
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    http_client=_http_client,
+)
 
 SYSTEM_PROMPT = """You are a certified personal trainer and registered dietitian.
 You provide evidence-based, safe fitness and nutrition advice.

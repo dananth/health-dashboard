@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db
-from routers import garmin, metrics, exercise, diet, logs, chat
+from routers import garmin, metrics, exercise, diet, logs, chat, auth
 
 app = FastAPI(title="Health Dashboard API", version="1.0.0")
 
@@ -13,6 +13,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(garmin.router)
 app.include_router(metrics.router)
 app.include_router(exercise.router)
