@@ -8,4 +8,7 @@ pydantic==2.10.4
 httpx==0.28.1
 python-multipart==0.0.20
 certifi
-truststore
+aiofiles
+# truststore is macOS-only (system keychain for corporate SSL proxy)
+# Installed separately on macOS dev — not needed on Railway Linux
+
