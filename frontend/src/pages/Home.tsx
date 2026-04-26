@@ -18,9 +18,6 @@ const REFRESH_OPTIONS = [
   { label: '30 min', value: 30 * 60 * 1000 },
 ];
 
-const ACTIVITY_LEVELS = ['sedentary', 'light', 'moderate', 'active', 'very_active'];
-const GOALS = ['weight_loss', 'maintenance', 'muscle_gain'];
-
 function StatCard({ icon: Icon, label, value, unit, color = 'emerald' }: {
   icon: React.ElementType; label: string; value?: string | number | null; unit?: string; color?: string;
 }) {
