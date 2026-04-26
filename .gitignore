@@ -5,6 +5,7 @@ backend/**/__pycache__/
 backend/*.pyc
 backend/health.db
 backend/.env
+backend/.garmin_tokens/
 
 # Node
 frontend/node_modules/
