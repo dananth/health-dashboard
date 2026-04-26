@@ -8,8 +8,13 @@ import {
 } from './api';
 
 // ── Garmin ──────────────────────────────────────────────────────────────────
-export const useGarminSummary = (days = 7) =>
-  useQuery({ queryKey: ['garmin', days], queryFn: () => fetchGarminSummary(days), retry: 1 });
+export const useGarminSummary = (days = 7, refetchIntervalMs?: number) =>
+  useQuery({
+    queryKey: ['garmin', days],
+    queryFn: () => fetchGarminSummary(days),
+    retry: 1,
+    refetchInterval: refetchIntervalMs,
+  });
 
 // ── Profile / Metrics ────────────────────────────────────────────────────────
 export const useProfile = () =>

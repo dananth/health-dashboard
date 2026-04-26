@@ -5,8 +5,18 @@ import {
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { format } from 'date-fns';
-import { Heart, Footprints, Moon, Flame, Wind, Activity } from 'lucide-react';
+import { Heart, Footprints, Moon, Flame, Wind, Activity, RefreshCw } from 'lucide-react';
 import type { UserProfile } from '../api';
+
+const ACTIVITY_LEVELS = ['sedentary', 'light', 'moderate', 'active', 'very_active'];
+const GOALS = ['weight_loss', 'maintenance', 'muscle_gain'];
+
+const REFRESH_OPTIONS = [
+  { label: 'Off', value: undefined },
+  { label: '5 min', value: 5 * 60 * 1000 },
+  { label: '15 min', value: 15 * 60 * 1000 },
+  { label: '30 min', value: 30 * 60 * 1000 },
+];
 
 const ACTIVITY_LEVELS = ['sedentary', 'light', 'moderate', 'active', 'very_active'];
 const GOALS = ['weight_loss', 'maintenance', 'muscle_gain'];
@@ -108,9 +118,14 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
 }
 
 export default function Home() {
-  const { data: garmin, isLoading, isError } = useGarminSummary(7);
+  const [refreshInterval, setRefreshInterval] = useState<number | undefined>(undefined);
+  const { data: garmin, isLoading, isError, isFetching, dataUpdatedAt, refetch } = useGarminSummary(7, refreshInterval);
   const { data: profile } = useProfile();
   const [showModal, setShowModal] = useState(false);
+
+  const lastSynced = dataUpdatedAt
+    ? format(new Date(dataUpdatedAt), 'HH:mm:ss')
+    : null;
 
   const sleepChartData = (garmin?.sleep ?? []).map((s: { date: string; total_seconds: number; deep_seconds: number; rem_seconds: number }) => ({
     date: s.date,
@@ -133,12 +148,48 @@ export default function Home() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Overview</h1>
-        <button onClick={() => setShowModal(true)}
-          className="text-sm bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg transition-colors">
-          {profile ? 'Update Profile' : 'Setup Profile'}
-        </button>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">Overview</h1>
+          {/* Last synced + manual refresh */}
+          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            <button
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="flex items-center gap-1 hover:text-emerald-400 transition-colors disabled:opacity-40"
+              title="Refresh now"
+            >
+              <RefreshCw size={12} className={isFetching ? 'animate-spin' : ''} />
+            </button>
+            {lastSynced && <span>Last synced {lastSynced}</span>}
+            {isFetching && !isLoading && <span className="text-emerald-400">Refreshing…</span>}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Auto-refresh picker */}
+          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+            <span>Auto-refresh:</span>
+            <div className="flex gap-1">
+              {REFRESH_OPTIONS.map((opt) => (
+                <button
+                  key={opt.label}
+                  onClick={() => setRefreshInterval(opt.value)}
+                  className={`px-2 py-1 rounded-md transition-colors ${
+                    refreshInterval === opt.value
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : 'bg-gray-800 text-gray-400 hover:text-gray-100'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button onClick={() => setShowModal(true)}
+            className="text-sm bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg transition-colors">
+            {profile ? 'Update Profile' : 'Setup Profile'}
+          </button>
+        </div>
       </div>
 
       {isError && (
