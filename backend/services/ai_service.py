@@ -20,10 +20,20 @@ if sys.platform == "darwin":
 else:
     _http_client = httpx.Client()
 
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
-    http_client=_http_client,
-)
+# Lazy singleton — not created at import time so a missing API key doesn't
+# crash the server on startup; it raises a proper 500 only when AI is called.
+_openai_client: OpenAI | None = None
+
+
+def _get_client() -> OpenAI:
+    global _openai_client
+    if _openai_client is None:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise RuntimeError("OPENAI_API_KEY environment variable is not set.")
+        _openai_client = OpenAI(api_key=api_key, http_client=_http_client)
+    return _openai_client
+
 
 SYSTEM_PROMPT = """You are a certified personal trainer and registered dietitian.
 You provide evidence-based, safe fitness and nutrition advice.
@@ -43,7 +53,7 @@ User metrics:
 - VO2 Max: {garmin_stats.get('vo2max', 'unknown')}
 - Goal: {metrics.get('goal', 'weight_loss')}
 """
-    response = client.chat.completions.create(
+    response = _get_client().chat.completions.create(
         model="gpt-4o-mini",
         response_format={"type": "json_object"},
         messages=[
@@ -63,7 +73,7 @@ User metrics:
 - Goal: {metrics.get('goal', 'weight_loss')}
 - Diet: Vegetarian (no meat, no fish; eggs and dairy allowed)
 """
-    response = client.chat.completions.create(
+    response = _get_client().chat.completions.create(
         model="gpt-4o-mini",
         response_format={"type": "json_object"},
         messages=[
@@ -80,7 +90,7 @@ def stream_chat(messages: list[dict], context: str | None = None):
     if context:
         system += f"\n\nContext: {context}"
     all_messages = [{"role": "system", "content": system}] + messages
-    stream = client.chat.completions.create(
+    stream = _get_client().chat.completions.create(
         model="gpt-4o-mini",
         messages=all_messages,
         stream=True,
